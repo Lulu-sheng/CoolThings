@@ -128,16 +128,33 @@ function handleSubmitButton() {
                 var yPosition=50;
                 var spacingBetweenWords = 20;
                 var words = [];
-
-                for (var i = 0; i < responseObj.lineArray.length; i++) {
-                    var arrayOfWords = responseObj.lineArray[i].split(" ");
-                    var xPosition = 50;
-                    for (var j = 0; j < arrayOfWords.length; j++) {
-                        words.push({word: arrayOfWords[j], x: xPosition, y:yPosition});
-                        xPosition += context.measureText(arrayOfWords[j]).width + spacingBetweenWords;
-                    }
-                    yPosition += 60;
-                }
+				console.log(responseObj.lineArray);
+				for(let line of responseObj.lineArray){
+					let xPosition = 50;
+							
+					let wordsInLine = line.split(/\s/);
+					
+					for(let aWord of wordsInLine){
+						while(aWord.indexOf('[') > -1){
+						//for(let counter = 0; aWord.indexOf('[') > -1; counter++){
+							// chord found
+						
+							let indexOfChord = aWord.indexOf('[');
+							let chord = aWord.substring(indexOfChord,aWord.indexOf(']')+1);
+							aWord = aWord.replace(/\b\[.+?\]|\[.+?\]\b|\[.+?\]/, ''); // WE NEED TO CHANGE THIS TO BETTER REGEX
+							let chordXOffset = context.measureText(aWord.substring(0,indexOfChord)).width -
+								context.measureText(chord.charAt(0)).width;
+							words.push({word:chord, x:xPosition + chordXOffset,  y:yPosition - 25});
+						}
+						
+						if(aWord.length > 0){
+							words.push({word:aWord, x:xPosition,  y:yPosition});
+						}
+						xPosition += context.measureText(aWord).width + spacingBetweenWords;
+					}
+      				yPosition += 60;
+				}
+				
 
                 // R3.3 The lyrics and chords shown on canvas are in chord-pro format
                 wordsDrawn = words;
