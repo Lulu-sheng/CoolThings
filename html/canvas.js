@@ -218,7 +218,6 @@ function handleSaveAsButton() {
     var userRequestJSON = JSON.stringify(userRequestObj);
     $('#userTextField').val(''); //clear the user text field
 
-    // CALLBACK FUNCTION WHAT
     $.post("newFile", userRequestJSON, function(data, status) {
         console.log("success");
     });

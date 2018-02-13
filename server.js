@@ -10,6 +10,7 @@ var fs = require("fs"); //need to read static files
 var url = require("url"); //to parse url strings
 
 var ROOT_DIR = "html";
+var SONGS_DIR = "html/songs";
 var songs = ["Brown Eyed Girl", "Sister Golden Hair", "Peaceful Easy Feeling"];
 
 var MIME_TYPES = {
@@ -41,7 +42,7 @@ http.createServer(function(request, response) {
     var urlObj = url.parse(request.url, true, false);
     console.log("\n============================");
     console.log("PATHNAME: " + urlObj.pathname);
-    console.log("REQUEST: " + ROOT_DIR + urlObj.pathname);
+    console.log("REQUEST: " + SONGS_DIR + urlObj.pathname);
     console.log("METHOD: " + request.method);
 
     var receivedData = "";
@@ -63,8 +64,7 @@ http.createServer(function(request, response) {
             var returnObj = {};
 
             if (dataObj.hasOwnProperty('fileTitle')) {
-                // CALLBACK WAHT
-                fs.writeFile('html/'+dataObj.fileTitle+'.txt', dataObj.fileText, (err) => {
+                fs.writeFile(SONGS_DIR + "/"+dataObj.fileTitle+'.txt', dataObj.fileText, (err) => {
                     if (err) throw err;
                 });
 
@@ -72,12 +72,7 @@ http.createServer(function(request, response) {
 
             } else {
                 if (songs.includes(dataObj.text)) {
-                /*
-                if (dataObj.text == "Brown Eyed Girl" ||
-                    dataObj.text == "Peaceful Easy Feeling" || 
-                    dataObj.text == "Sister Golden Hair") {
-                    */
-                    var filePath = ROOT_DIR + "/" + dataObj.text +".txt";
+                    var filePath = SONGS_DIR + "/" + dataObj.text +".txt";
 
                     var lines = [];
                     fs. readFile(filePath, function(err, data) {
