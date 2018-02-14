@@ -1,9 +1,9 @@
-// Lulu Sheng
-// 101072946
-// Assignment 1
+// Lulu Sheng - 101072946
+// Nicholas Ellul - 101064168
+// Assignment 2
 // COMP2406
 // Louis Nel
-// 2018-02-01
+// 2018-02-13
 
 var http = require("http"); //need to http
 var fs = require("fs"); //need to read static files
@@ -63,18 +63,23 @@ http.createServer(function(request, response) {
             console.log("USER REQUEST: " + dataObj.text);
             var returnObj = {};
 
+			// If the client provided text to write to a file, write it to the file.
             if (dataObj.hasOwnProperty('fileTitle')) {
                 fs.writeFile(SONGS_DIR + "/"+dataObj.fileTitle+'.txt', dataObj.fileText, (err) => {
                     if (err) throw err;
                 });
-
+				
+				// Add this new song to an array of songs.
                 songs.push(dataObj.fileTitle);
-
             } else {
+				
+				// if the user is requesting a song based on a name
+				// and its a song we have saved
                 if (songs.includes(dataObj.text)) {
                     var filePath = SONGS_DIR + "/" + dataObj.text +".txt";
-
                     var lines = [];
+					
+					// Read that songs file and return it to the user
                     fs. readFile(filePath, function(err, data) {
                         if (err) {
                             console.log("ERROR: " + JSON.stringify(err));
@@ -82,7 +87,8 @@ http.createServer(function(request, response) {
                             response.end(JSON.stringify(err));
                             return;
                         }
-
+						
+						// Split the song file into lines then return them
                         lines = data.toString().split("\n");
                         returnObj.lineArray = lines;
 
@@ -98,9 +104,10 @@ http.createServer(function(request, response) {
             }
         }
 
+		// Load the user's specified URL
         if (request.method == "GET") {
             var filePath = ROOT_DIR + urlObj.pathname;
-
+			
             fs.readFile(filePath, function(err, data) {
                 if (err) {
                     console.log("ERROR: " + JSON.stringify(err));
@@ -116,7 +123,7 @@ http.createServer(function(request, response) {
     });
 }).listen(3000);
 
-    console.log("Server Running CNTL-C to quit");
+  console.log("Server Running at http://localhost:3000/assignment2.html CNTL-C to quit");
 
 
 
