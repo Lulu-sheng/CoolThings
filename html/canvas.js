@@ -32,22 +32,20 @@ var drawCanvas = function() {
 
 	context.fillStyle = 'white';
 	context.fillRect(0,0,canvas.width,canvas.height); //erase canvas
-
 	context.font = '20pt Arial';
 	context.fillStyle = 'cornflowerblue';
 
 	// draws quote
 	for(var i=0; i<wordsDrawn.length; i++){
 		var data = wordsDrawn[i];
-		if(data.id = 'chord'){
-			context.strokeStyle = 'blue';
-			context.fillText(data.word, data.x, data.y);
-			context.strokeText(data.word, data.x, data.y);
-		}else{
-			context.strokeStyle = 'yellow';
-			context.fillText(data.word, data.x, data.y);
-			context.strokeText(data.word, data.x, data.y);
+		if(data.id == 'chord'){
+			context.strokeStyle = 'GreenYellow ';
 		}
+		else{
+			context.strokeStyle = 'Green';
+		}
+		context.fillText(data.word, data.x, data.y);
+		context.strokeText(data.word, data.x, data.y);
 	}
 }
 
@@ -118,28 +116,35 @@ function handleSubmitButton() {
 	var userText = $('#userTextField').val();
 
 	if(userText && userText != '') {
-
+		
+		// Add the text to a JSON object to send to the server
 		var userRequestObj = {text: userText}; 
 		var userRequestJSON = JSON.stringify(userRequestObj);
-		$('#userTextField').val(''); //clear the user text field
+		
+		$('#userTextField').val(''); 
 
+		// POSTing the input text will return an array of song lyric lines
 		$.post("userText", userRequestJSON, function(data, status) {
 			console.log("data: " + data);
 			console.log("typeof: " + typeof data);
+	
 			var responseObj = JSON.parse(data);
-
+			
 			if (responseObj.lineArray) {
 
-				// Create objects representing words and their locations
-				var yPosition=50;
-				var spacingBetweenWords = 20;
-				var words = [];
-
+				// The following code will
+				// create objects representing words and their locations
+				let yPosition=50;
+				let spacingBetweenWords = 20;
+				let words = [];
+				
+				// For each line in the array of lines...
 				for(let line of responseObj.lineArray){
-					let xPosition = 50;
+					
+					let xPosition = 50; 
+					let wordsInLine = line.split(/\s/); // Split the line into words
 
-					let wordsInLine = line.split(/\s/);
-
+					// For each word in the line...
 					for(let aWord of wordsInLine){
 
 						// If there is a chord in the word
@@ -147,23 +152,29 @@ function handleSubmitButton() {
 
 							// get the index where the chord starts
 							let indexOfChord = aWord.indexOf('[');
+							
 							// Use that index to get a substring containing the whole chord
 							let chord = aWord.substring(indexOfChord,aWord.indexOf(']')+1);
+							
 							// Get the chord out of the word by replacing it with blank space
-							aWord = aWord.replace(/\b\[.+?\]|\[.+?\]\b|\[.+?\]/, ''); // WE NEED TO CHANGE THIS TO BETTER REGEX
+							aWord = aWord.replace(/\[.+?\]/,'');
 
 							// Measures how many pixels from the start of the word that the chord was
 							// then subtracts the character [ from the chord so that its centered over where it 
 							// was in the word
 							let chordXOffset = context.measureText(aWord.substring(0,indexOfChord)).width -
 								context.measureText(chord.charAt(0)).width;
+							
 							// Push this chord with the value offsets and an id chord which is used in refresh
 							words.push({word:chord, x:xPosition + chordXOffset,  y:yPosition - 25, id:'chord'});
 						}
-
+						
+						// If we are left with "" (which occurs when the whole word is a chord)
+						// dont add it. Only add it when...
 						if(aWord.length > 0){
 							words.push({word:aWord, x:xPosition,  y:yPosition});
 						}
+						// Offset x based on word length and
 						xPosition += context.measureText(aWord).width + spacingBetweenWords;
 					}
 					yPosition += 60;
@@ -200,6 +211,12 @@ function insertStringAtIndex(stringAddingTo, stringToAdd, index){
 		
 }
 
+function getPreviousLyric(myWords,index){
+	for(let i = index; i > 0; i--){
+		if(myWords[i].id != 'chord') return myWords[i];
+	}
+}
+
 function handleRefreshButton () {
 	let yPos = 50;
 	const lineOffset = 60;
@@ -222,22 +239,25 @@ function handleRefreshButton () {
 		for (var j = 0; j < line.length; j++) {
 
 			if(j > 0){
+				
+				let previousWord = getPreviousLyric(line,j);
+				
 				// Calculate the previous words length since we use this value a lot
-				let prevWordWidth = context.measureText(line[j-1].word).width;
-
+				let prevWordWidth = context.measureText(previousWord.word).width;
+				
 				// If this word is a chord, and its x position is less than where the last word ended
 				// Then we know this chord belongs inside that word
-				if(line[j].x < line[j-1].x + prevWordWidth && line[j].id == 'chord' && line[j-1].id != 'chord' ){
+				if(line[j].x < previousWord.x + prevWordWidth && line[j].id == 'chord' && previousWord.id != 'chord' ){
 
 					// The index of where the chord should be in that word is calculated like a percent.
 					// we take the x value of the chord and divide it by the x value of the end of the previous word.
 					// If the start of the word is 0, and the end of the word is 100. This will tell me where along 
 					// that range the chord would be. I multiply the length of that previous word by the percentage to 
 					// get my index
-					let indexWithinWord = Math.floor((line[j].x - line[j-1].x)/(prevWordWidth) * (line[j-1].word.length)-1);
+					let indexWithinWord = Math.floor((line[j].x - previousWord.x)/(prevWordWidth) * (previousWord.word.length)-1);
 
 					// Calculate how far back from the end of empLine the chord should go
-					let indexRelativeToTempLine = tempLine.length - ((line[j-1].word.length - 1) - indexWithinWord);
+					let indexRelativeToTempLine = tempLine.length - ((previousWord.word.length - 1) - indexWithinWord);
 					console.log("Chord " + line[j].word);
 					console.log(indexWithinWord + "WRD");
 					console.log(indexRelativeToTempLine + " TMP");
