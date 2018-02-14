@@ -1,9 +1,9 @@
-// Lulu Sheng
-// 101072946
-// Assignment 1
+// Lulu Sheng - 101072946
+// Nicholas Ellul - 101064168
+// Assignment 2
 // COMP2406
 // Louis Nel
-// 2018-02-01
+// 2018-02-13
 
 var canvas = document.getElementById('canvas1');
 
@@ -11,12 +11,15 @@ var wordsDrawn = [];
 var file = [];
 
 function getWordAtLocation(aCanvasX, aCanvasY){
-	var context = canvas.getContext('2d');
+	// This function returns the word object of the word I 
+	// am clicking
 
-	for(var i=0; i<wordsDrawn.length; i++){
-		var wordLength = context.measureText(wordsDrawn[i].word).width;
+	let context = canvas.getContext('2d');
 
-		// Collision detection between mouse press and word
+	for(let i=0; i<wordsDrawn.length; i++){
+		let wordLength = context.measureText(wordsDrawn[i].word).width;
+
+		// Select what word I am trying to drag
 		if((aCanvasX - wordsDrawn[i].x < wordLength) &&
 		   (aCanvasX - wordsDrawn[i].x > 0) &&
 		   (wordsDrawn[i].y - aCanvasY < 20) &&
@@ -35,9 +38,11 @@ var drawCanvas = function() {
 	context.font = '20pt Arial';
 	context.fillStyle = 'cornflowerblue';
 
-	// draws quote
-	for(var i=0; i<wordsDrawn.length; i++){
-		var data = wordsDrawn[i];
+	// Draw word objects
+	for(let i=0; i<wordsDrawn.length; i++){
+		let data = wordsDrawn[i];
+
+		// If its a chord, draw it in a different colour than lyrics.
 		if(data.id == 'chord'){
 			context.strokeStyle = 'GreenYellow ';
 		}
@@ -52,11 +57,11 @@ var drawCanvas = function() {
 function handleMouseDown(e){
 
 	//get mouse location
-	var rect = canvas.getBoundingClientRect();
+	let rect = canvas.getBoundingClientRect();
 
 	//use jQuery event object pageX and pageY
-	var canvasX = e.pageX - rect.left;
-	var canvasY = e.pageY - rect.top;
+	let canvasX = e.pageX - rect.left;
+	let canvasY = e.pageY - rect.top;
 
 	wordBeingMoved = getWordAtLocation(canvasX, canvasY);
 
@@ -82,9 +87,9 @@ function handleMouseMove(e){
 	console.log("mouse move");
 
 	//get mouse location
-	var rect = canvas.getBoundingClientRect();
-	var canvasX = e.pageX - rect.left;
-	var canvasY = e.pageY - rect.top;
+	let rect = canvas.getBoundingClientRect();
+	let canvasX = e.pageX - rect.left;
+	let canvasY = e.pageY - rect.top;
 
 	// update the wordBeingMoved position
 	wordBeingMoved.x = canvasX + deltaX;
@@ -110,26 +115,27 @@ function handleMouseUp(e){
 
 
 function handleSubmitButton() {
-	var context = canvas.getContext('2d');
+	// This function displays a user specified chord pro file as draggable 
+	// elements on the canvas
 
-	// Get text from user input field
-	var userText = $('#userTextField').val();
+	let context = canvas.getContext('2d');
+	let userText = $('#userTextField').val();
 
 	if(userText && userText != '') {
-		
+
 		// Add the text to a JSON object to send to the server
-		var userRequestObj = {text: userText}; 
-		var userRequestJSON = JSON.stringify(userRequestObj);
-		
+		let userRequestObj = {text: userText}; 
+		let userRequestJSON = JSON.stringify(userRequestObj);
+
 		$('#userTextField').val(''); 
 
 		// POSTing the input text will return an array of song lyric lines
 		$.post("userText", userRequestJSON, function(data, status) {
 			console.log("data: " + data);
 			console.log("typeof: " + typeof data);
-	
-			var responseObj = JSON.parse(data);
-			
+
+			let responseObj = JSON.parse(data);
+
 			if (responseObj.lineArray) {
 
 				// The following code will
@@ -137,10 +143,10 @@ function handleSubmitButton() {
 				let yPosition=50;
 				let spacingBetweenWords = 20;
 				let words = [];
-				
+
 				// For each line in the array of lines...
 				for(let line of responseObj.lineArray){
-					
+
 					let xPosition = 50; 
 					let wordsInLine = line.split(/\s/); // Split the line into words
 
@@ -152,10 +158,10 @@ function handleSubmitButton() {
 
 							// get the index where the chord starts
 							let indexOfChord = aWord.indexOf('[');
-							
+
 							// Use that index to get a substring containing the whole chord
 							let chord = aWord.substring(indexOfChord,aWord.indexOf(']')+1);
-							
+
 							// Get the chord out of the word by replacing it with blank space
 							aWord = aWord.replace(/\[.+?\]/,'');
 
@@ -164,32 +170,30 @@ function handleSubmitButton() {
 							// was in the word
 							let chordXOffset = context.measureText(aWord.substring(0,indexOfChord)).width -
 								context.measureText(chord.charAt(0)).width;
-							
+
 							// Push this chord with the value offsets and an id chord which is used in refresh
 							words.push({word:chord, x:xPosition + chordXOffset,  y:yPosition - 25, id:'chord'});
 						}
-						
+
 						// If we are left with "" (which occurs when the whole word is a chord)
 						// dont add it. Only add it when...
 						if(aWord.length > 0){
 							words.push({word:aWord, x:xPosition,  y:yPosition});
 						}
-						// Offset x based on word length and
+
+						// Offset x based on word length and the width of the spacing
 						xPosition += context.measureText(aWord).width + spacingBetweenWords;
 					}
 					yPosition += 60;
 				}
 
-
-				// R3.3 The lyrics and chords shown on canvas are in chord-pro format
 				wordsDrawn = words;
 				drawCanvas();
 
-				// R3.4 The chord pro text downloaded from the server is shown
-				// as paragraph lines below the canvas
+				// Add lines to paragraph beneath the canvas
 				let textDiv = document.getElementById("text-area");
 				let textParagraph = "";
-				for (var i = 0; i < responseObj.lineArray.length; i++) {
+				for (let i = 0; i < responseObj.lineArray.length; i++) {
 					textParagraph = textParagraph + `<p> ${responseObj.lineArray[i]} </p>`;
 				}
 				textDiv.innerHTML = textParagraph;
@@ -206,105 +210,111 @@ function handleSubmitButton() {
 }
 
 function insertStringAtIndex(stringAddingTo, stringToAdd, index){
+	// This helper function injects a string into another string at an index then return it.
 	return stringAddingTo.substring(0,index) + stringToAdd 
 		+ stringAddingTo.substring(index,stringAddingTo.length-1);
-		
-}
-
-function getPreviousLyric(myWords,index){
-	for(let i = index; i > 0; i--){
-		if(myWords[i].id != 'chord') return myWords[i];
-	}
 }
 
 function handleRefreshButton () {
+	// This function generates the text at the bottom of the webpage. It shows
+	// a preview of the chord pro file based on the position of elements on the canvas
+
+	let context = canvas.getContext('2d');
 	let yPos = 50;
 	const lineOffset = 60;
 	let finalLines = [];
-	var context = canvas.getContext('2d');
-	while (yPos <= $("#canvas1").height()) {
-		var line = [];
 
-		for (var i = 0; i < wordsDrawn.length; i++) {
+	// Loop until we hit the bottom of the canvas
+	while (yPos <= $("#canvas1").height()) {
+		let line = [];
+
+		// Collect words on this anchor line into an array
+		for (let i = 0; i < wordsDrawn.length; i++) {
 			if (wordsDrawn[i].y > yPos - 50 && wordsDrawn[i].y < yPos + 10) {
 				line.push(wordsDrawn[i]);
 			}
 		}
 
+		// Sort this array from lowest to highest x values
 		line.sort(function (a, b) {
 			return a.x - b.x;
 		});
 
+		// For each word in the line
 		let tempLine = "";
-		for (var j = 0; j < line.length; j++) {
+		for (let j = 0; j < line.length; j++) {
 
-			if(j > 0){
-				
-				let previousWord = getPreviousLyric(line,j);
-				
-				// Calculate the previous words length since we use this value a lot
-				let prevWordWidth = context.measureText(previousWord.word).width;
-				
-				// If this word is a chord, and its x position is less than where the last word ended
-				// Then we know this chord belongs inside that word
-				if(line[j].x < previousWord.x + prevWordWidth && line[j].id == 'chord' && previousWord.id != 'chord' ){
+			if(j > 0){ 
+
+				// This makes sure prevWord is always the object of the last LYRIC we've seen
+				if (!line[j-1].hasOwnProperty('id')) {
+					var prevWord = line[j-1];
+					var prevWordWidth = context.measureText(line[j-1].word).width;
+				}
+
+				// If this word is a chord, and its x position is less than where the last LYRIC ended
+				// Then we know this chord belongs inside that lyric
+				if(line[j].x < prevWord.x + prevWordWidth && line[j].id == 'chord' && prevWord.id != 'chord' ){
 
 					// The index of where the chord should be in that word is calculated like a percent.
 					// we take the x value of the chord and divide it by the x value of the end of the previous word.
-					// If the start of the word is 0, and the end of the word is 100. This will tell me where along 
-					// that range the chord would be. I multiply the length of that previous word by the percentage to 
-					// get my index
-					let indexWithinWord = Math.floor((line[j].x - previousWord.x)/(prevWordWidth) * (previousWord.word.length)-1);
+					// If the start of the word is 0, and the end of the word is 100. This will tell us where along 
+					// that range the chord would be. We multiply the length of that previous word by the percentage to 
+					// get the index
+					let indexWithinWord = Math.floor((line[j].x - prevWord.x)/(prevWordWidth) * (prevWord.word.length)-1);
 
-					// Calculate how far back from the end of empLine the chord should go
-					let indexRelativeToTempLine = tempLine.length - ((previousWord.word.length - 1) - indexWithinWord);
+					// Calculate how far back from the end of tempLine the chord should go
+					let indexRelativeToTempLine = tempLine.length - ((prevWord.word.length - 1) - indexWithinWord);
 					console.log("Chord " + line[j].word);
 					console.log(indexWithinWord + "WRD");
 					console.log(indexRelativeToTempLine + " TMP");
 					// Function shoves the chord within the string and returns the new string.
-					tempLine = insertStringAtIndex(tempLine,line[j].word, indexRelativeToTempLine);
-					tempLine += " "
+					tempLine = insertStringAtIndex(tempLine,line[j].word, indexRelativeToTempLine) + " ";
 					continue;
-				}
-			}
-			tempLine += line[j].word + " ";
+                }
+            }
+				// Add this word to the line buffer
+				tempLine += line[j].word + " ";
+			// Push the line buffer into an array of lines
 		}
-
-		console.log(tempLine);
-		finalLines.push(tempLine);
-		yPos += lineOffset;
+			console.log(tempLine);
+			finalLines.push(tempLine);
+			yPos += lineOffset;
+		
 	}
-
-	let textDiv = document.getElementById("text-area");
-	let textParagraph = "";
-	for (var i = 0; i < finalLines.length; i++) {
-		textParagraph = textParagraph + `<p> ${finalLines[i]} </p>`;
-	}
-	textDiv.innerHTML = textParagraph;
-
+		// Update the paragraph tag at the bottom of the webpage
+		let textDiv = document.getElementById("text-area");
+		let textParagraph = "";
+		for (let i = 0; i < finalLines.length; i++) {
+			textParagraph = textParagraph + `<p> ${finalLines[i]} </p>`;
+		}
+		textDiv.innerHTML = textParagraph;
+	
+	// save the lines into a variable ready to be saved to a file
 	file = finalLines;
 }
 
 function handleSaveAsButton() {
-	handleRefreshButton();
+	// This function saves the lyrics and chords to a 
+	// text file based on their position on the canvas
 
-	var result = "";
-	var userText = $('#userTextField').val();
+	handleRefreshButton(); 
 
-	for (var i = 0; i < file.length; i++) {
+	let result = "";
+	let userText = $('#userTextField').val();
+
+	$('#userTextField').val(''); //clear the user text field
+	// Transfer the array of lines into a single string
+	for (let i = 0; i < file.length; i++) {
 		result += file[i] + "\n";
 	}
 
-	console.log(result);
-
-	var userRequestObj = {fileTitle: userText, fileText: result};
-	var userRequestJSON = JSON.stringify(userRequestObj);
-	$('#userTextField').val(''); //clear the user text field
-
+	// Send post request with new content to write to a file.
+	let userRequestObj = {fileTitle: userText, fileText: result};
+	let userRequestJSON = JSON.stringify(userRequestObj);
 	$.post("newFile", userRequestJSON, function(data, status) {
 		console.log("success");
 	});
-
 }
 
 var ENTER = 13;
